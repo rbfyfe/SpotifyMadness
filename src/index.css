@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg-primary: #0D0D0D;
+  --color-bg-secondary: #181818;
+  --color-bg-card: #282828;
+  --color-border-subtle: #333333;
+  --color-spotify-green: #1DB954;
+  --color-spotify-green-bright: #1ED760;
+  --color-spotify-green-dark: #1AA34A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B3B3B3;
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #0D0D0D;
+  color: #FFFFFF;
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Audio waveform animation */
+@keyframes waveform {
+  0%, 100% { height: 4px; }
+  50% { height: 20px; }
+}
+
+.waveform-bar {
+  animation: waveform 0.8s ease-in-out infinite;
+}
+
+/* Gradient animation for login */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient {
+  background: linear-gradient(135deg, #0D0D0D 0%, #1DB954 25%, #0D0D0D 50%, #1AA34A 75%, #0D0D0D 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* Green glow pulse */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(29, 185, 84, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(29, 185, 84, 0.6), 0 0 40px rgba(29, 185, 84, 0.2); }
+}
+
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Album 3D spin */
+@keyframes albumSpin {
+  0% { transform: perspective(800px) rotateY(0deg); }
+  100% { transform: perspective(800px) rotateY(1080deg); }
+}
+
+.album-spin {
+  animation: albumSpin 3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Text glow */
+@keyframes textGlow {
+  0%, 100% { text-shadow: 0 0 10px rgba(29, 185, 84, 0.5), 0 0 20px rgba(29, 185, 84, 0.3); }
+  50% { text-shadow: 0 0 20px rgba(29, 185, 84, 0.8), 0 0 40px rgba(29, 185, 84, 0.5), 0 0 60px rgba(29, 185, 84, 0.2); }
+}
+
+.text-glow {
+  animation: textGlow 2s ease-in-out infinite;
+}
