@@ -1,5 +1,19 @@
 import { useBracketStore } from '../../stores/bracketStore';
 import { Region } from './Region';
+import { MatchupCard } from './MatchupCard';
+
+// Must match RoundColumn constants
+const CARD_HEIGHT = 76;
+const BASE_GAP = 8;
+
+function getGap(roundIndex: number): number {
+  return Math.pow(2, roundIndex) * (CARD_HEIGHT + BASE_GAP) - CARD_HEIGHT;
+}
+
+function getTopPadding(roundIndex: number): number {
+  if (roundIndex === 0) return 0;
+  return (Math.pow(2, roundIndex) - 1) * (CARD_HEIGHT + BASE_GAP) / 2;
+}
 
 export function BracketLayout() {
   const bracket = useBracketStore((s) => s.bracket);
@@ -8,10 +22,7 @@ export function BracketLayout() {
   const { regions, rounds, size } = bracket;
   const regionCount = regions.length;
 
-  // Determine how many rounds are "regional" (within each region)
-  // 32-bracket: 3 regional rounds (R32, S16, E8) + Final Four + Championship
-  // 16-bracket: 3 regional rounds + Championship
-  // 8-bracket: all rounds in single region
+  // Determine how many rounds are "regional"
   const regionalRoundCount = size === 8 ? rounds.length : 3;
 
   // Split regions into left and right halves
@@ -23,24 +34,13 @@ export function BracketLayout() {
   // Cross-region rounds (Final Four, Championship)
   const crossRegionRounds = rounds.slice(regionalRoundCount);
 
+  // For cross-region rounds, the round index continues from regional rounds
+  // Final Four is effectively round 3 (after 3 regional rounds), Championship is round 4
+  const crossRegionBaseRoundIndex = regionalRoundCount;
+
   return (
     <div className="overflow-x-auto overflow-y-auto p-4 md:p-8">
-      {/* Round Labels */}
-      <div className="flex items-center justify-center mb-6">
-        <div className="flex gap-0">
-          {rounds.map((round) => (
-            <div
-              key={round.index}
-              className="text-center text-xs md:text-sm font-heading font-semibold text-text-secondary uppercase tracking-wider"
-              style={{ width: '180px', flexShrink: 0 }}
-            >
-              {round.name}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-stretch justify-center" style={{ minWidth: rounds.length * 180 }}>
+      <div className="flex items-start justify-center" style={{ minWidth: rounds.length * 204 }}>
         {/* Left Regions */}
         <div className="flex flex-col">
           {leftRegionIndices.map((regionIndex) => (
@@ -56,18 +56,34 @@ export function BracketLayout() {
 
         {/* Cross-Region Rounds (Final Four + Championship) */}
         {crossRegionRounds.length > 0 && (
-          <div className="flex items-center">
-            {crossRegionRounds.map((round) => (
-              <div
-                key={round.index}
-                className="flex flex-col justify-center gap-8"
-                style={{ width: '180px' }}
-              >
-                {round.matchups.map((matchup) => (
-                  <MatchupCardImport key={matchup.id} matchup={matchup} />
-                ))}
-              </div>
-            ))}
+          <div className="flex items-start gap-6">
+            {crossRegionRounds.map((round, i) => {
+              const roundIndex = crossRegionBaseRoundIndex + i;
+              const gap = getGap(roundIndex);
+              const topPadding = getTopPadding(roundIndex);
+
+              return (
+                <div
+                  key={round.index}
+                  style={{
+                    width: '180px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    className="flex flex-col"
+                    style={{
+                      gap: `${gap}px`,
+                      paddingTop: `${topPadding}px`,
+                    }}
+                  >
+                    {round.matchups.map((matchup) => (
+                      <MatchupCard key={matchup.id} matchup={matchup} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -89,6 +105,3 @@ export function BracketLayout() {
     </div>
   );
 }
-
-// Import at bottom to avoid circular dependency issues
-import { MatchupCard as MatchupCardImport } from './MatchupCard';

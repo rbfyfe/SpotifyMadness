@@ -18,13 +18,13 @@ export function Region({ regionIndex, regionName, rounds, direction }: RegionPro
   const orderedRounds = direction === 'rtl' ? [...regionRounds].reverse() : regionRounds;
 
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       {/* Region Label */}
       <div className={`text-sm font-heading font-bold text-spotify-green mb-3 px-2 ${direction === 'rtl' ? 'text-right' : 'text-left'}`}>
         {regionName}
       </div>
 
-      <div className={`flex items-center ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-start gap-6 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
         {orderedRounds.map((round, i) => (
           <RoundColumn
             key={round.index}

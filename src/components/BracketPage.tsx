@@ -12,6 +12,8 @@ import type { BracketSize } from '../types/bracket';
 
 export function BracketPage() {
   const user = useAuthStore((s) => s.user);
+  const isDemo = useAuthStore((s) => s.isDemo);
+  const logout = useAuthStore((s) => s.logout);
   const { bracket, currentMatchupId, initBracket, setArtists } = useBracketStore();
   const { getTopArtists } = useSpotifyApi();
   const initSDK = useAudioStore((s) => s.initSDK);
@@ -19,10 +21,10 @@ export function BracketPage() {
   const [error, setError] = useState<string | null>(null);
   const [sizeOptions, setSizeOptions] = useState<BracketSize[] | null>(null);
 
-  // Initialize Spotify Web Playback SDK
+  // Initialize Spotify Web Playback SDK (skip in demo mode)
   useEffect(() => {
-    initSDK();
-  }, [initSDK]);
+    if (!isDemo) initSDK();
+  }, [initSDK, isDemo]);
 
   useEffect(() => {
     if (bracket) {
@@ -108,12 +110,31 @@ export function BracketPage() {
         <h1 className="text-xl font-heading font-bold">
           🏆 Music Madness
         </h1>
-        {user && (
-          <span className="text-text-secondary text-sm font-body">
-            {user.display_name}
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {user && (
+            <span className="text-text-secondary text-sm font-body">
+              {user.display_name}
+            </span>
+          )}
+          {isDemo && (
+            <button
+              onClick={logout}
+              className="text-xs text-spotify-green hover:text-spotify-green-bright font-body cursor-pointer"
+            >
+              Exit Demo
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Demo Banner */}
+      {isDemo && (
+        <div className="bg-spotify-green/10 border-b border-spotify-green/20 px-4 py-2 text-center">
+          <span className="text-sm text-spotify-green font-body">
+            Demo Mode — Connect with Spotify for the full experience with audio previews
+          </span>
+        </div>
+      )}
 
       {/* Bracket */}
       <BracketLayout />
@@ -121,8 +142,8 @@ export function BracketPage() {
       {/* Matchup Modal */}
       {currentMatchupId && <MatchupModal />}
 
-      {/* Mini Player */}
-      <MiniPlayer />
+      {/* Mini Player (hide in demo) */}
+      {!isDemo && <MiniPlayer />}
 
       {/* Winner Celebration */}
       {bracket.champion && <WinnerScreen />}

@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import type { SpotifyArtist, SpotifyTrack, SpotifyAlbum } from '../types/spotify';
+import { demoArtists } from '../data/demoArtists';
+import { demoTracks } from '../data/demoTracks';
 
 const BASE_URL = 'https://api.spotify.com/v1';
 
@@ -11,6 +13,7 @@ function delay(ms: number) {
 export function useSpotifyApi() {
   const token = useAuthStore((s) => s.token);
   const logout = useAuthStore((s) => s.logout);
+  const isDemo = useAuthStore((s) => s.isDemo);
 
   const fetchWithAuth = useCallback(
     async (url: string, retries = 3): Promise<Response> => {
@@ -42,6 +45,8 @@ export function useSpotifyApi() {
   );
 
   const getTopArtists = useCallback(async (): Promise<SpotifyArtist[]> => {
+    if (isDemo) return demoArtists;
+
     const artists = new Map<string, SpotifyArtist>();
     const timeRanges = ['medium_term', 'long_term', 'short_term'] as const;
 
@@ -61,17 +66,19 @@ export function useSpotifyApi() {
     }
 
     return Array.from(artists.values());
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, isDemo]);
 
   const getArtistTopTracks = useCallback(
     async (artistId: string): Promise<SpotifyTrack[]> => {
+      if (isDemo) return demoTracks[artistId] ?? [];
+
       const res = await fetchWithAuth(
         `/artists/${artistId}/top-tracks?market=US`
       );
       const data = await res.json();
       return (data.tracks as SpotifyTrack[]).slice(0, 3);
     },
-    [fetchWithAuth]
+    [fetchWithAuth, isDemo]
   );
 
   const getArtistLatestAlbum = useCallback(
