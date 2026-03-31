@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './components/LoginPage';
 import { CallbackPage } from './components/CallbackPage';
 import { BracketPage } from './components/BracketPage';
+import { SharedBracketPage } from './components/shared/SharedBracketPage';
 
 function getPath() {
   return window.location.pathname;
@@ -21,7 +22,9 @@ export default function App() {
 
   return (
     <AnimatePresence mode="wait">
-      {path === '/callback' ? (
+      {path.startsWith('/shared/') ? (
+        <SharedBracketPage key="shared" />
+      ) : path === '/callback' ? (
         <CallbackPage key="callback" />
       ) : isAuthenticated && path === '/bracket' ? (
         <BracketPage key="bracket" />

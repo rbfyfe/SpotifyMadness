@@ -8,13 +8,14 @@ interface MatchupCardProps {
 
 export function MatchupCard({ matchup }: MatchupCardProps) {
   const openMatchup = useBracketStore((s) => s.openMatchup);
+  const readOnly = useBracketStore((s) => s.readOnly);
 
   const isActive = matchup.artistA && matchup.artistB && !matchup.winner;
   const isDecided = matchup.winner !== null;
   const isEmpty = !matchup.artistA && !matchup.artistB;
 
   const handleClick = () => {
-    if (isEmpty) return;
+    if (readOnly || isEmpty) return;
     // Allow clicking decided matchups to change winner
     if (matchup.artistA && matchup.artistB) {
       openMatchup(matchup.id);
@@ -29,12 +30,12 @@ export function MatchupCard({ matchup }: MatchupCardProps) {
       className={`
         rounded-lg overflow-hidden mx-1
         ${isEmpty ? 'bg-bg-secondary/50 border border-border-subtle/30' : 'bg-bg-secondary border border-border-subtle'}
-        ${isActive ? 'glow-pulse cursor-pointer border-spotify-green/50' : ''}
-        ${isDecided ? 'cursor-pointer hover:border-text-secondary/50' : ''}
-        ${!isEmpty && !isActive && !isDecided ? 'cursor-default' : ''}
+        ${!readOnly && isActive ? 'glow-pulse cursor-pointer border-spotify-green/50' : ''}
+        ${!readOnly && isDecided ? 'cursor-pointer hover:border-text-secondary/50' : ''}
+        ${readOnly || (!isEmpty && !isActive && !isDecided) ? 'cursor-default' : ''}
       `}
       onClick={handleClick}
-      whileHover={isActive || isDecided ? { scale: 1.02 } : undefined}
+      whileHover={!readOnly && (isActive || isDecided) ? { scale: 1.02 } : undefined}
     >
       <ArtistRow
         artist={matchup.artistA}

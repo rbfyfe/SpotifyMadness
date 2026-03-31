@@ -83,13 +83,15 @@ export function useSpotifyApi() {
 
   const getArtistLatestAlbum = useCallback(
     async (artistId: string): Promise<SpotifyAlbum | null> => {
+      if (isDemo) return null;
+
       const res = await fetchWithAuth(
         `/artists/${artistId}/albums?limit=1&include_groups=album,single&market=US`
       );
       const data = await res.json();
       return (data.items as SpotifyAlbum[])[0] ?? null;
     },
-    [fetchWithAuth]
+    [fetchWithAuth, isDemo]
   );
 
   return { getTopArtists, getArtistTopTracks, getArtistLatestAlbum };

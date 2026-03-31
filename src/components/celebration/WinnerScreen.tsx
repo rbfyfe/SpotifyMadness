@@ -5,6 +5,7 @@ import { useAudioStore } from '../../stores/audioStore';
 import { useSpotifyApi } from '../../hooks/useSpotifyApi';
 import { ConfettiOverlay } from './ConfettiOverlay';
 import { AlbumSpin } from './AlbumSpin';
+import { ShareCardModal } from '../share/ShareCardModal';
 import type { SpotifyAlbum } from '../../types/spotify';
 
 export function WinnerScreen() {
@@ -18,6 +19,8 @@ export function WinnerScreen() {
   const [album, setAlbum] = useState<SpotifyAlbum | null>(null);
   const [showConfetti, setShowConfetti] = useState(true);
   const [bracketPath, setBracketPath] = useState<string[]>([]);
+  const [bracketPathStructured, setBracketPathStructured] = useState<{ round: string; opponent: string }[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const champion = bracket?.champion;
 
@@ -26,17 +29,20 @@ export function WinnerScreen() {
     if (!bracket || !champion) return;
 
     const path: string[] = [];
+    const structured: { round: string; opponent: string }[] = [];
     for (const round of bracket.rounds) {
       for (const matchup of round.matchups) {
         if (matchup.winner?.id === champion.id) {
           const opponent = matchup.artistA?.id === champion.id ? matchup.artistB : matchup.artistA;
           if (opponent) {
             path.push(`${round.name}: beat ${opponent.name}`);
+            structured.push({ round: round.name, opponent: opponent.name });
           }
         }
       }
     }
     setBracketPath(path);
+    setBracketPathStructured(structured);
   }, [bracket, champion]);
 
   // Fetch album and auto-play
@@ -67,23 +73,9 @@ export function WinnerScreen() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, [resetBracket]);
 
-  const handleShare = useCallback(async () => {
-    const text = `🏆 My Music Madness Champion: ${champion?.name}!\n\n${bracketPath.join('\n')}\n\nPlay at Music Madness!`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ text });
-        return;
-      } catch { /* fallback to clipboard */ }
-    }
-
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('Results copied to clipboard!');
-    } catch {
-      alert('Could not copy to clipboard. Try sharing manually.');
-    }
-  }, [champion, bracketPath]);
+  const handleShare = useCallback(() => {
+    setShowShareModal(true);
+  }, []);
 
   if (!champion) return null;
 
@@ -172,6 +164,14 @@ export function WinnerScreen() {
           Share Results
         </button>
       </motion.div>
+
+      {showShareModal && (
+        <ShareCardModal
+          champion={champion}
+          bracketPath={bracketPathStructured}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </motion.div>
   );
 }

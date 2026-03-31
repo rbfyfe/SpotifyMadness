@@ -9,6 +9,7 @@ interface BracketState {
   bracket: BracketData | null;
   currentMatchupId: string | null;
   trackCache: Record<string, SpotifyTrack[]>;
+  readOnly: boolean;
 
   setArtists: (artists: SpotifyArtist[]) => void;
   initBracket: (size: BracketSize) => void;
@@ -18,6 +19,8 @@ interface BracketState {
   cacheTracks: (artistId: string, tracks: SpotifyTrack[]) => void;
   resetBracket: () => void;
   getMatchupById: (id: string) => Matchup | undefined;
+  setBracket: (bracket: BracketData) => void;
+  setReadOnly: (readOnly: boolean) => void;
 }
 
 function findMatchup(bracket: BracketData, id: string): Matchup | undefined {
@@ -58,6 +61,7 @@ export const useBracketStore = create<BracketState>((set, get) => ({
   bracket: null,
   currentMatchupId: null,
   trackCache: {},
+  readOnly: false,
 
   setArtists: (artists) => set({ allArtists: artists }),
 
@@ -70,7 +74,7 @@ export const useBracketStore = create<BracketState>((set, get) => ({
 
   selectWinner: (matchupId, winner) =>
     set((state) => {
-      if (!state.bracket) return state;
+      if (!state.bracket || state.readOnly) return state;
 
       // Structured deep clone (avoids JSON.parse fragility)
       const bracket: BracketData = {
@@ -124,7 +128,10 @@ export const useBracketStore = create<BracketState>((set, get) => ({
       trackCache: { ...state.trackCache, [artistId]: tracks },
     })),
 
-  resetBracket: () => set({ bracket: null, currentMatchupId: null }),
+  resetBracket: () => set({ bracket: null, currentMatchupId: null, readOnly: false }),
+
+  setBracket: (bracket) => set({ bracket }),
+  setReadOnly: (readOnly) => set({ readOnly }),
 
   getMatchupById: (id) => {
     const { bracket } = get();
@@ -132,3 +139,4 @@ export const useBracketStore = create<BracketState>((set, get) => ({
     return findMatchup(bracket, id);
   },
 }));
+
