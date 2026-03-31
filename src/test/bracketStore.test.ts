@@ -25,6 +25,7 @@ describe('bracketStore', () => {
       bracket: null,
       currentMatchupId: null,
       trackCache: {},
+      readOnly: false,
     });
   });
 
@@ -145,5 +146,82 @@ describe('bracketStore', () => {
     const state = useBracketStore.getState();
     expect(state.bracket).toBeNull();
     expect(state.currentMatchupId).toBeNull();
+  });
+
+  it('resets readOnly flag on resetBracket', () => {
+    const store = useBracketStore.getState();
+    store.setReadOnly(true);
+    expect(useBracketStore.getState().readOnly).toBe(true);
+
+    store.resetBracket();
+    expect(useBracketStore.getState().readOnly).toBe(false);
+  });
+
+  it('blocks selectWinner when readOnly is true', () => {
+    const store = useBracketStore.getState();
+    store.setArtists(makeArtists(8));
+    store.initBracket(8);
+    store.setReadOnly(true);
+
+    const bracket = useBracketStore.getState().bracket!;
+    const matchup = bracket.rounds[0]!.matchups[0]!;
+    const winner = matchup.artistA!;
+
+    useBracketStore.getState().selectWinner(matchup.id, winner);
+
+    // Winner should NOT have been set
+    const updated = useBracketStore.getState().bracket!;
+    expect(updated.rounds[0]!.matchups[0]!.winner).toBeNull();
+  });
+
+  it('setBracket hydrates bracket data directly', () => {
+    const store = useBracketStore.getState();
+    store.setArtists(makeArtists(8));
+    store.initBracket(8);
+
+    const originalBracket = useBracketStore.getState().bracket!;
+
+    // Reset and re-hydrate
+    store.resetBracket();
+    expect(useBracketStore.getState().bracket).toBeNull();
+
+    store.setBracket(originalBracket);
+    const hydrated = useBracketStore.getState().bracket;
+    expect(hydrated).not.toBeNull();
+    expect(hydrated!.size).toBe(originalBracket.size);
+    expect(hydrated!.rounds).toHaveLength(originalBracket.rounds.length);
+  });
+
+  it('setReadOnly toggles readOnly flag', () => {
+    expect(useBracketStore.getState().readOnly).toBe(false);
+
+    useBracketStore.getState().setReadOnly(true);
+    expect(useBracketStore.getState().readOnly).toBe(true);
+
+    useBracketStore.getState().setReadOnly(false);
+    expect(useBracketStore.getState().readOnly).toBe(false);
+  });
+
+  it('getMatchupById returns correct matchup', () => {
+    const store = useBracketStore.getState();
+    store.setArtists(makeArtists(8));
+    store.initBracket(8);
+
+    const bracket = useBracketStore.getState().bracket!;
+    const firstMatchup = bracket.rounds[0]!.matchups[0]!;
+
+    const found = useBracketStore.getState().getMatchupById(firstMatchup.id);
+    expect(found).toBeDefined();
+    expect(found!.id).toBe(firstMatchup.id);
+    expect(found!.artistA?.id).toBe(firstMatchup.artistA?.id);
+  });
+
+  it('getMatchupById returns undefined for invalid id', () => {
+    const store = useBracketStore.getState();
+    store.setArtists(makeArtists(8));
+    store.initBracket(8);
+
+    const found = useBracketStore.getState().getMatchupById('nonexistent');
+    expect(found).toBeUndefined();
   });
 });
