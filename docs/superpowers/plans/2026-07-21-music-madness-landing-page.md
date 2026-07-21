@@ -22,9 +22,14 @@ RippedPages PR #1 merging — see Task 5 Step 1. Do Phase A first.
 - **Existing app behavior must not change.** `src/test/bracketStore.test.ts` is the regression guard for Task 1 and must pass unmodified.
 - **`LoginPage.tsx` is not edited.** It moves routes; its markup and copy stay exactly as they are.
 - **`/shared/:id` must keep being matched before the auth check** in `App.tsx`.
-- **RippedPages work happens only in** `/Users/russellfyfe/rippedpages/.claude/worktrees/music-madness` on branch `music-madness-page`. Never in `~/rippedpages`.
-- **`data/projects.json` is generated.** Edit `inventory.full.json`, then run `node scripts/build-public.mjs`. Never hand-edit the generated file.
-- **The RippedPages register (`index.html`) is not edited.** The `page`-field infrastructure it needs already landed on `main`.
+- **`CLAUDE.md` on RippedPages `main` is the authority for Phase B**, above this plan and above any coordination message. Read it first; if it has changed since 2026-07-21, it wins. Its rules as of that date are reflected below.
+- **RippedPages work happens only in** `/Users/russellfyfe/rippedpages/.claude/worktrees/music-madness` on branch `music-madness-page`. Never in `~/rippedpages`, which stays clean on `main`.
+- **Never merge a PR, never push to `main`, never run `vercel`.** Merging auto-deploys the public site. Open the PR, report the URL, stop.
+- **`data/projects.json` is generated.** Edit `inventory.full.json`, then run `node scripts/build-public.mjs`. Never hand-edit it. It conflicts in every stacked PR — resolve by re-running the script, never by hand.
+- **The RippedPages register (`index.html`) is not edited.** The `page`-field change it needs belongs to PR #1 / PR #4, not to this branch.
+- **Standard page CTAs**, exactly as `CLAUDE.md` specifies: live deployment → `SEE IT LIVE` → the URL with `target="_blank"`; public repo → `READ THE SOURCE` → the GitHub URL with `target="_blank"`. Music Madness has both.
+- **Never mention Rainplan in any RippedPages file.** A prior commit had to scrub a leak; do not reintroduce one.
+- **Local preview is** `python3 -m http.server 3907` from the worktree root.
 
 ### THE PROMPT (verbatim, shared by both phases)
 
@@ -1101,28 +1106,50 @@ building your own. LoginPage is unchanged and still reachable at /login."
 - [ ] **Step 1: Check the precondition — do not start until it passes**
 
 Phase B depends on the `page`-field infrastructure, which as of 2026-07-21 is **not on
-`main`**. It sits on `claudecleaner-page` as open PR #1
-(https://github.com/rbfyfe/rippedpages/pull/1). `main` and `music-madness-page` are both at
-`16c9764`, which predates it.
+`main`**. Four PRs are open and none is merged:
 
-Without that infrastructure `build-public.mjs` strips the `page` field out of
-`data/projects.json`, so Task 6 silently produces a register row that still opens the live
-app in a new tab. Building Phase B before PR #1 lands produces a page nothing links to.
+| PR | Branch | Carries the `page` infra? |
+|---|---|---|
+| #1 | `claudecleaner-page` | yes — it introduces it |
+| #2 | `maplescreenshot-page` | no |
+| #3 | `calendez-page` | no |
+| #4 | `register-pages` | yes — stacks #1, adds six more papers |
+
+Either #1 or #4 landing unblocks this. Neither has. Without that infrastructure
+`build-public.mjs` strips the `page` field out of `data/projects.json` and `index.html` has
+no same-tab rendering, so Task 6 silently produces a register row that still opens the live
+app in a new tab — a working paper nothing links to.
 
 ```bash
 cd /Users/russellfyfe/rippedpages/.claude/worktrees/music-madness
 git fetch origin
 git log --oneline -1 origin/main
 grep -c '"page"' scripts/build-public.mjs
+grep -c 'p.page' index.html
 ```
 
-Expected once unblocked: `origin/main` includes the ClaudeCleaner commit, and the grep
-returns `1`. If the grep returns `0`, **stop** — PR #1 has not merged. Report the block
-rather than working around it.
+Expected once unblocked: both greps return `1` or more. If either returns `0`, **stop** —
+the infrastructure has not landed. Report the block rather than working around it. Do not
+add the `page` field to `build-public.mjs` from this branch; that change belongs to PR #1.
 
-The manager session fast-forwards this branch to `main` after PR #1 merges. Do not merge
-`main` here manually; if the branch is somehow behind after PR #1 lands, ask the manager
-session rather than reconciling it from this lane.
+- [ ] **Step 1b: Read the authority and confirm the register position**
+
+```bash
+git show origin/main:CLAUDE.md
+git show origin/main:inventory.full.json | python3 -c "
+import json,sys
+pub=[p for p in json.load(sys.stdin)['projects'] if p.get('category')=='public']
+for i,p in enumerate(pub,1):
+    if p['slug']=='music-madness': print(f'RP-{i:02d}')
+"
+```
+
+`CLAUDE.md` outranks this plan; if it has changed, follow it. The second command prints the
+register number to use in the back link and colophon — verified `RP-03` on 2026-07-21, but
+derive it rather than assuming, since it is array position and the array can grow.
+
+The manager session fast-forwards this branch after the infra lands. Do not merge `main`
+here manually.
 
 - [ ] **Step 2: Read the two reference papers end to end**
 
@@ -1201,11 +1228,16 @@ Body structure:
         <span class="chip"><b>1</b> champion</span>
       </div>
       <div class="acts">
-        <a class="act solid" href="https://music-madness-ashen.vercel.app">Play the live demo</a>
-        <a class="act ghost" href="https://github.com/rbfyfe/SpotifyMadness">Read the source</a>
+        <a class="act solid" href="https://music-madness-ashen.vercel.app" target="_blank" rel="noopener noreferrer">SEE IT LIVE</a>
+        <a class="act ghost" href="https://github.com/rbfyfe/SpotifyMadness" target="_blank" rel="noopener noreferrer">READ THE SOURCE</a>
       </div>
     </header>
 ```
+
+The CTA labels and `target="_blank"` are mandated by `CLAUDE.md`, not stylistic. Calendez
+predates that rule and uses different wording — follow `CLAUDE.md`, not Calendez, here.
+Music Madness has both a live deployment and a public repo, so it takes both CTAs and no
+`REQUEST THE CODE` mailto.
 
 Then five sections, each opening with the house `.reg-label` block:
 
@@ -1395,10 +1427,10 @@ Expected: `IDENTICAL`. If it prints a diff, fix the HTML copy — `PromptCard.ts
 - [ ] **Step 5: Serve and inspect**
 
 ```bash
-npx serve . -p 3210
+python3 -m http.server 3907
 ```
 
-Open `http://localhost:3210/work/music-madness/` and confirm:
+Open `http://localhost:3907/work/music-madness/` and confirm:
 - The paper background, grid, crop marks, and registration mark match the register exactly.
 - The plate is the only dark element on the page.
 - The copy button copies, and its label flips to "Copied" and back.
@@ -1480,10 +1512,10 @@ the register and the deploy config are out of scope.
 - [ ] **Step 5: Verify the register row end to end**
 
 ```bash
-npx serve . -p 3210
+python3 -m http.server 3907
 ```
 
-At `http://localhost:3210/`, confirm the Music Madness row:
+At `http://localhost:3907/`, confirm the Music Madness row:
 - shows the corrected blurb (artists, not tracks; no mention of votes),
 - reveals `→ read the file` on hover,
 - navigates **in the same tab** to `/work/music-madness/`.
