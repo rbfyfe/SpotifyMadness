@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Kept byte-identical to the copy in the RippedPages working paper at
@@ -22,14 +22,39 @@ Notes:
 - My app will be in Developer Mode, so add my own Spotify account under
   "Users" in the dashboard before I try to log in`;
 
+type CopyStatus = 'idle' | 'copied' | 'failed';
+
 export function PromptCard() {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<CopyStatus>('idle');
+  const resetTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current !== undefined) {
+        window.clearTimeout(resetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const armResetTimer = () => {
+    if (resetTimerRef.current !== undefined) {
+      window.clearTimeout(resetTimerRef.current);
+    }
+    resetTimerRef.current = window.setTimeout(() => setStatus('idle'), 2000);
+  };
 
   const copy = async () => {
-    await navigator.clipboard.writeText(CLAUDE_PROMPT);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(CLAUDE_PROMPT);
+      setStatus('copied');
+    } catch {
+      setStatus('failed');
+    }
+    armResetTimer();
   };
+
+  const buttonLabel =
+    status === 'copied' ? 'Copied' : status === 'failed' ? 'Copy failed — select the text above' : 'Copy the prompt';
 
   return (
     <div className="overflow-hidden rounded-xl border border-border-subtle bg-bg-secondary">
@@ -42,7 +67,7 @@ export function PromptCard() {
           onClick={copy}
           className="cursor-pointer rounded-full bg-spotify-green px-5 py-2 font-body text-sm font-bold text-black transition-colors duration-200 hover:bg-spotify-green-bright"
         >
-          {copied ? 'Copied' : 'Copy the prompt'}
+          {buttonLabel}
         </button>
       </div>
       <pre className="overflow-x-auto px-5 py-4 font-mono text-[13px] leading-relaxed text-text-secondary">
