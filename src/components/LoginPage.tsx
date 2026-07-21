@@ -1,16 +1,9 @@
 import { motion } from 'framer-motion';
 import { useSpotifyAuth } from '../hooks/useSpotifyAuth';
-import { useAuthStore } from '../stores/authStore';
+import { startDemo } from '../utils/startDemo';
 
 export function LoginPage() {
   const { login } = useSpotifyAuth();
-  const setDemo = useAuthStore((s) => s.setDemo);
-
-  const handleDemo = () => {
-    setDemo();
-    window.history.pushState({}, '', '/bracket');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
 
   return (
     <div className="animated-gradient min-h-screen flex flex-col items-center justify-center px-4">
@@ -50,7 +43,7 @@ export function LoginPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={handleDemo}
+            onClick={startDemo}
             className="border-2 border-text-secondary/50 hover:border-text-primary text-text-secondary hover:text-text-primary font-semibold text-base px-8 py-3 rounded-full transition-colors duration-200 font-body cursor-pointer"
           >
             Try Demo
