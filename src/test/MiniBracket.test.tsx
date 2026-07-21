@@ -56,4 +56,24 @@ describe('MiniBracket', () => {
 
     expect(screen.queryByTestId('mini-champion')).not.toBeInTheDocument();
   });
+
+  it('renders two-letter monograms for single-word artists like Drake and SZA', () => {
+    render(<MiniBracket onPlayDemo={() => {}} />);
+
+    const card = screen.getByTestId('mini-matchup-r0-m3');
+    const monograms = within(card).getAllByRole('button').map((btn) => {
+      const span = btn.querySelector('span');
+      return span?.textContent || '';
+    });
+
+    monograms.forEach((monogram) => {
+      expect(monogram).toHaveLength(2);
+    });
+  });
+
+  it('renders no images — monograms only, so the page makes no external requests', () => {
+    const { container } = render(<MiniBracket onPlayDemo={() => {}} />);
+
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+  });
 });
