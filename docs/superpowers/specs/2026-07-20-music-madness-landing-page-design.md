@@ -199,11 +199,21 @@ All RippedPages work happens in the per-session worktree at
 `/Users/russellfyfe/rippedpages/.claude/worktrees/music-madness`, branch `music-madness-page`.
 Never in `~/rippedpages` directly — that stays clean on `main`.
 
-Merge `main` into the branch before starting, to pick up commit `135c3f3` (the `page`-field
-infrastructure and the ClaudeCleaner working paper). The branch is currently at `16c9764`,
-one commit behind.
+**Blocked on RippedPages PR #1.** The `page`-field infrastructure this part depends on is not
+on `main` — it sits on `claudecleaner-page` as open PR #1. `main` and `music-madness-page`
+are both at `16c9764`, which predates it. An earlier revision of this spec recorded that
+infrastructure as already merged; `main` was subsequently rewound and the work moved onto a
+PR branch.
 
-Delivery is a pull request.
+Until PR #1 merges, `build-public.mjs` strips the `page` field, so the register row would
+still open the live app in a new tab and the working paper would be unreachable from the
+register. The manager session fast-forwards this branch to `main` after PR #1 lands; do not
+merge `main` from this lane.
+
+Delivery is a pull request against `main`, opened but never merged from here — Vercel
+auto-deploys `main` to rippedpages.com, so merges are Russ's call via the manager session.
+This branch is Music Madness's permanent lane; future updates are new PRs against the same
+page.
 
 ## Files
 

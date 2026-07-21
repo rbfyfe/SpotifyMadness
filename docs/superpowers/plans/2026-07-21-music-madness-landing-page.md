@@ -10,6 +10,9 @@
 
 **Spec:** `docs/superpowers/specs/2026-07-20-music-madness-landing-page-design.md`
 
+**Sequencing:** Phase A is unblocked and can start immediately. **Phase B is blocked** on
+RippedPages PR #1 merging — see Task 5 Step 1. Do Phase A first.
+
 ## Global Constraints
 
 - **TypeScript is strict** with `noUnusedLocals`, `noUnusedParameters`, and `noUncheckedIndexedAccess`. Array and record indexing yields `T | undefined`, so index access needs `!` or a guard. This is why existing code reads `bracket.rounds[0]!.matchups[0]!`. Match it.
@@ -1095,16 +1098,31 @@ building your own. LoginPage is unchanged and still reachable at /login."
 - Consumes: the house form and CSS from `work/calendez/index.html` and `work/claudecleaner/index.html` in the same repo. THE PROMPT from Global Constraints.
 - Produces: a page served at `/work/music-madness/`, which Task 6 links from the register.
 
-- [ ] **Step 1: Enter the worktree and merge `main`**
+- [ ] **Step 1: Check the precondition — do not start until it passes**
+
+Phase B depends on the `page`-field infrastructure, which as of 2026-07-21 is **not on
+`main`**. It sits on `claudecleaner-page` as open PR #1
+(https://github.com/rbfyfe/rippedpages/pull/1). `main` and `music-madness-page` are both at
+`16c9764`, which predates it.
+
+Without that infrastructure `build-public.mjs` strips the `page` field out of
+`data/projects.json`, so Task 6 silently produces a register row that still opens the live
+app in a new tab. Building Phase B before PR #1 lands produces a page nothing links to.
 
 ```bash
 cd /Users/russellfyfe/rippedpages/.claude/worktrees/music-madness
-git status
-git merge main -m "Merge main into music-madness-page"
-git log --oneline -3
+git fetch origin
+git log --oneline -1 origin/main
+grep -c '"page"' scripts/build-public.mjs
 ```
 
-Expected: clean status before merging; after merging, `135c3f3 Add ClaudeCleaner working paper and internal page links` is in the log, and `work/claudecleaner/index.html` exists.
+Expected once unblocked: `origin/main` includes the ClaudeCleaner commit, and the grep
+returns `1`. If the grep returns `0`, **stop** — PR #1 has not merged. Report the block
+rather than working around it.
+
+The manager session fast-forwards this branch to `main` after PR #1 merges. Do not merge
+`main` here manually; if the branch is somehow behind after PR #1 lands, ask the manager
+session rather than reconciling it from this lane.
 
 - [ ] **Step 2: Read the two reference papers end to end**
 
