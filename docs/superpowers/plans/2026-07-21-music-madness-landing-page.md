@@ -20,7 +20,7 @@ RippedPages PR #1 merging — see Task 5 Step 1. Do Phase A first.
 - **Type-only imports use `import type { … }`.**
 - **Tailwind classes for styling** in the React app. Inline styles only in `ShareCard.tsx` (out of scope here).
 - **Existing app behavior must not change.** `src/test/bracketStore.test.ts` is the regression guard for Task 1 and must pass unmodified.
-- **`LoginPage.tsx` is not edited.** It moves routes; its markup and copy stay exactly as they are.
+- **`LoginPage.tsx`'s markup and copy stay exactly as they are.** Task 4 edits only its imports and the body of its demo click handler, which move to a shared `startDemo()` helper. Every rendered string, class, and element stays byte-identical. The spec's non-goal is about its copy, not about never opening the file.
 - **`/shared/:id` must keep being matched before the auth check** in `App.tsx`.
 - **`CLAUDE.md` on RippedPages `main` is the authority for Phase B**, above this plan and above any coordination message. Read it first; if it has changed since 2026-07-21, it wins. Its rules as of that date are reflected below.
 - **RippedPages work happens only in** `/Users/russellfyfe/rippedpages/.claude/worktrees/music-madness` on branch `music-madness-page`. Never in `~/rippedpages`, which stays clean on `main`.
@@ -70,7 +70,9 @@ Notes:
 | `src/components/landing/MiniMatchupCard.tsx` (create) | Renders one head-to-head tile; emits a pick |
 | `src/components/landing/MiniBracket.tsx` (create) | Owns local bracket state; renders three rounds and the champion |
 | `src/components/landing/PromptCard.tsx` (create) | Holds `CLAUDE_PROMPT`; renders it with a copy button |
-| `src/components/landing/LandingPage.tsx` (create) | Page shell; all prose sections; demo navigation |
+| `src/components/landing/LandingPage.tsx` (create) | Page shell; all prose sections |
+| `src/utils/startDemo.ts` (create) | Enter demo mode and navigate to the bracket; shared by both pages |
+| `src/components/LoginPage.tsx` (modify) | Handler body only — delegates to `startDemo()`. Markup and copy untouched |
 | `src/App.tsx` (modify) | `/` → LandingPage, `/login` → LoginPage |
 | `src/test/bracketEngine.applyWinner.test.ts` (create) | Unit tests for the extracted function |
 | `src/test/MiniBracket.test.tsx` (create) | Play-through and invalidation |
@@ -787,13 +789,15 @@ comment in each file names the other as its counterpart."
 ## Task 4: Landing page and routing
 
 **Files:**
+- Create: `src/utils/startDemo.ts`
 - Create: `src/components/landing/LandingPage.tsx`
+- Modify: `src/components/LoginPage.tsx:2,7,9-13,53` (imports and handler body only)
 - Modify: `src/App.tsx:23-35`
 - Test: `src/test/App.routing.test.tsx`
 
 **Interfaces:**
 - Consumes: `MiniBracket` (Task 2), `PromptCard` (Task 3), `useAuthStore` from `src/stores/authStore.ts`.
-- Produces: `LandingPage()`.
+- Produces: `startDemo(): void` and `LandingPage()`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -801,9 +805,10 @@ Create `src/test/App.routing.test.tsx`:
 
 ```tsx
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from '../App';
 import { useAuthStore } from '../stores/authStore';
+import { startDemo } from '../utils/startDemo';
 
 function goTo(path: string) {
   window.history.pushState({}, '', path);
@@ -841,6 +846,26 @@ describe('App routing', () => {
     expect(screen.getByRole('button', { name: /copy the prompt/i })).toBeInTheDocument();
   });
 });
+
+describe('startDemo', () => {
+  it('enters demo mode and navigates to the bracket', () => {
+    startDemo();
+
+    expect(useAuthStore.getState().isDemo).toBe(true);
+    expect(window.location.pathname).toBe('/bracket');
+  });
+
+  it('is the handler both entry points use', () => {
+    // Guards against the two pages drifting apart: LoginPage and LandingPage
+    // must route through the same helper, not their own copies.
+    goTo('/login');
+    const { unmount } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /try demo/i }));
+    expect(useAuthStore.getState().isDemo).toBe(true);
+    expect(window.location.pathname).toBe('/bracket');
+    unmount();
+  });
+});
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -848,14 +873,45 @@ describe('App routing', () => {
 Run: `npm test -- App.routing`
 Expected: FAIL — no heading/prompt button, because `/` still renders `LoginPage`.
 
-- [ ] **Step 3: Create `LandingPage.tsx`**
+- [ ] **Step 3: Extract the shared `startDemo` helper**
 
-The three lines inside `startDemo` mirror `LoginPage.handleDemo` deliberately. `LoginPage` is
-out of scope for edits, so the duplication is accepted rather than factored out.
+Both pages need to enter demo mode and navigate to the bracket. Rather than duplicate the
+three lines, create `src/utils/startDemo.ts`:
+
+```ts
+import { useAuthStore } from '../stores/authStore';
+
+/**
+ * Enter demo mode and navigate to the bracket.
+ * Shared by LoginPage and LandingPage so the two cannot drift.
+ */
+export function startDemo(): void {
+  useAuthStore.getState().setDemo();
+  window.history.pushState({}, '', '/bracket');
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+```
+
+Then update `src/components/LoginPage.tsx` to use it. **Change only the imports and the
+handler — every rendered string, class name, and element stays byte-identical.**
+
+Replace the import of `useAuthStore` (line 3) with:
+
+```tsx
+import { startDemo } from '../utils/startDemo';
+```
+
+Delete the `setDemo` selector and the `handleDemo` function (lines 7-13), and change the
+demo button's handler from `onClick={handleDemo}` to `onClick={startDemo}`.
+
+`useSpotifyAuth` and its `login` binding stay. `noUnusedLocals` is on, so leaving the old
+`useAuthStore` import or `setDemo` binding in place fails the build.
+
+- [ ] **Step 4: Create `LandingPage.tsx`**
 
 ```tsx
 import { motion } from 'framer-motion';
-import { useAuthStore } from '../../stores/authStore';
+import { startDemo } from '../../utils/startDemo';
 import { MiniBracket } from './MiniBracket';
 import { PromptCard } from './PromptCard';
 
@@ -897,14 +953,6 @@ const STEPS = [
 ];
 
 export function LandingPage() {
-  const setDemo = useAuthStore((s) => s.setDemo);
-
-  const startDemo = () => {
-    setDemo();
-    window.history.pushState({}, '', '/bracket');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
-
   return (
     <div className="min-h-screen bg-bg-primary">
       <section className="animated-gradient px-4 py-20 text-center sm:py-28">
@@ -1034,7 +1082,7 @@ export function LandingPage() {
 }
 ```
 
-- [ ] **Step 4: Wire the routes in `App.tsx`**
+- [ ] **Step 5: Wire the routes in `App.tsx`**
 
 Add the import next to the existing component imports:
 
@@ -1060,17 +1108,17 @@ Replace the `<AnimatePresence>` block (lines 23-35) with:
     </AnimatePresence>
 ```
 
-- [ ] **Step 5: Run the routing test**
+- [ ] **Step 6: Run the routing test**
 
 Run: `npm test -- App.routing`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 6: Run the full suite and the build**
+- [ ] **Step 7: Run the full suite and the build**
 
 Run: `npm test && npm run build`
 Expected: all tests PASS, build exits 0.
 
-- [ ] **Step 7: Verify by hand**
+- [ ] **Step 8: Verify by hand**
 
 Run: `npm run dev`, then check each in the browser:
 - `/` shows the landing page; seven picks crown a champion; changing a Quarterfinal pick clears it.
@@ -1079,15 +1127,21 @@ Run: `npm run dev`, then check each in the browser:
 - `/login` shows the original login page, unchanged.
 - `/bracket` without auth falls back to the landing page.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add src/components/landing/LandingPage.tsx src/App.tsx src/test/App.routing.test.tsx
+git add src/components/landing/LandingPage.tsx src/utils/startDemo.ts \
+        src/components/LoginPage.tsx src/App.tsx src/test/App.routing.test.tsx
 git commit -m "Add landing page at / and move login to /login
 
 Spotify's 25-user Developer Mode cap means the hosted app can't serve
 strangers, so / now previews the experience and hands over a prompt for
-building your own. LoginPage is unchanged and still reachable at /login."
+building your own.
+
+Both pages enter demo mode through a shared startDemo() helper rather than
+repeating the store call and history push. LoginPage's markup and copy are
+byte-identical; only its imports and click handler changed. It stays
+reachable at /login."
 ```
 
 ---
