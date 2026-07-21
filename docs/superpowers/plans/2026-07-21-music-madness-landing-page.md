@@ -476,10 +476,11 @@ interface MiniMatchupCardProps {
   onPick: (winner: SeededArtist) => void;
 }
 
-/** Two-letter monogram, e.g. "The Weeknd" -> "TW". */
+/** Two-letter monogram, e.g. "The Weeknd" -> "TW", "Drake" -> "DR". */
 function initials(name: string): string {
-  return name
-    .split(' ')
+  const words = name.split(' ').filter(Boolean);
+  if (words.length === 1) return (words[0] ?? '').slice(0, 2).toUpperCase();
+  return words
     .map((word) => word[0] ?? '')
     .join('')
     .slice(0, 2)
