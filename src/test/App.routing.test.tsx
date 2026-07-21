@@ -35,6 +35,17 @@ describe('App routing', () => {
     expect(screen.getByRole('button', { name: /copy the prompt/i })).toBeInTheDocument();
   });
 
+  // /login has no other inbound links anywhere in the app (see the five
+  // window.location.href = '/' call sites in authStore.logout, CallbackPage,
+  // ErrorBoundary, BracketPage, and SharedBracketPage) — this footer link is the
+  // only way an allowlisted user can get from the landing page back to sign-in.
+  it('renders a link to /login on the landing page', () => {
+    render(<App />);
+
+    const loginLink = screen.getByRole('link', { name: /sign in/i });
+    expect(loginLink).toHaveAttribute('href', '/login');
+  });
+
   it('renders the original login page at /login', () => {
     goTo('/login');
 

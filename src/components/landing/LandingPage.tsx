@@ -9,8 +9,8 @@ const FEATURES = [
     body: 'Your top 32 artists, ranked by popularity and spread across four regions by a serpentine draft.',
   },
   {
-    title: 'Previews on every matchup',
-    body: 'Open a head-to-head and play 30-second previews of each artist’s top tracks before you decide.',
+    title: 'Full playback for Premium listeners',
+    body: 'Open a head-to-head and stream full tracks while you decide — needs Spotify Premium. No Premium? The bracket still runs, just muted.',
   },
   {
     title: 'A champion, properly crowned',
@@ -18,7 +18,7 @@ const FEATURES = [
   },
   {
     title: 'Shareable when it’s done',
-    body: 'Export the bracket as an image, or send a link that anyone can open without a Spotify account.',
+    body: 'Export the bracket as an image on the spot. Add a free Supabase project and finished brackets become links anyone can open — no Spotify account required.',
   },
 ];
 
@@ -43,13 +43,14 @@ const STEPS = [
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-bg-primary">
+      <main>
       <section className="animated-gradient px-4 py-20 text-center sm:py-28">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
-          <div className="mb-6 text-6xl">🏆</div>
+          <div aria-hidden="true" className="mb-6 text-6xl">🏆</div>
           <h1 className="font-heading text-5xl font-black tracking-tight text-glow sm:text-7xl">
             Music Madness
           </h1>
@@ -154,6 +155,7 @@ export function LandingPage() {
           ))}
         </div>
       </section>
+      </main>
 
       <footer className="border-t border-border-subtle px-4 py-10 text-center font-body text-sm text-text-secondary">
         <a
@@ -164,6 +166,10 @@ export function LandingPage() {
         </a>
         <span className="mx-3 opacity-40">·</span>
         <span>Powered by the Spotify API</span>
+        <span className="mx-3 opacity-40">·</span>
+        <a href="/login" className="text-text-secondary/70 hover:text-text-secondary hover:underline">
+          On the allowlist? Sign in
+        </a>
       </footer>
     </div>
   );

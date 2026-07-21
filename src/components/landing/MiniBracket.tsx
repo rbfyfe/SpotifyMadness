@@ -57,8 +57,8 @@ export function MiniBracket({ onPlayDemo }: MiniBracketProps) {
             {bracket.champion.name}
           </p>
           <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary">
-            That&rsquo;s the mechanic. The real thing seeds your actual Spotify top 32 and plays
-            30-second previews on every matchup.
+            That&rsquo;s the mechanic. The real thing seeds your actual Spotify top 32, with full
+            track playback for Premium listeners.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <button

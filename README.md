@@ -35,13 +35,15 @@ cp .env.example .env
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app will be available at `http://127.0.0.1:5173`. Open it at that address, not
+`localhost` — Spotify's redirect URI match is exact, and the dev redirect URI below
+uses the loopback literal.
 
 ### Spotify Developer Dashboard
 
 The app uses PKCE auth (no backend needed). Ensure your Spotify app has these redirect URIs configured:
 
-- **Dev**: `http://localhost:5173/callback`
+- **Dev**: `http://127.0.0.1:5173/callback`
 - **Prod**: `https://<your-vercel-domain>/callback`
 
 ### Supabase Setup

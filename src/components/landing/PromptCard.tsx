@@ -12,12 +12,17 @@ Repo: https://github.com/rbfyfe/SpotifyMadness
 Please:
 1. Clone it and install dependencies
 2. Walk me through creating a Spotify Developer App — I need a Client ID,
-   and http://localhost:5173/callback added as a redirect URI
-3. Create my .env from .env.example with that Client ID
+   and http://127.0.0.1:5173/callback added as a redirect URI
+3. Create my .env from .env.example, setting both VITE_SPOTIFY_CLIENT_ID
+   and VITE_REDIRECT_URI to match
 4. Start the dev server and tell me what to click
 
 Notes:
 - Auth is Spotify PKCE — no backend needed
+- Spotify rejects "localhost" in redirect URIs, so I must open the app at
+  http://127.0.0.1:5173 — not localhost — or the URIs will not match
+- Track playback needs Spotify Premium; without it the bracket still works,
+  just silently
 - Supabase is optional; skip it unless I ask (sharing just turns off)
 - My app will be in Developer Mode, so add my own Spotify account under
   "Users" in the dashboard before I try to log in`;
@@ -54,7 +59,7 @@ export function PromptCard() {
   };
 
   const buttonLabel =
-    status === 'copied' ? 'Copied' : status === 'failed' ? 'Copy failed — select the text above' : 'Copy the prompt';
+    status === 'copied' ? 'Copied' : status === 'failed' ? 'Copy failed — select the text below' : 'Copy the prompt';
 
   return (
     <div className="overflow-hidden rounded-xl border border-border-subtle bg-bg-secondary">
