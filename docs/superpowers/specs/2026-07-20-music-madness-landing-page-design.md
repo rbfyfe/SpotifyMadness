@@ -193,55 +193,85 @@ with fields whitelisted to `slug, name, type, status, blurb, tech, url, action, 
 `inventory.full.json` and `scripts/` are excluded from deployment via `.vercelignore`.
 `data/projects.json` must never be hand-edited.
 
+## Workspace
+
+All RippedPages work happens in the per-session worktree at
+`/Users/russellfyfe/rippedpages/.claude/worktrees/music-madness`, branch `music-madness-page`.
+Never in `~/rippedpages` directly — that stays clean on `main`.
+
+Merge `main` into the branch before starting, to pick up commit `135c3f3` (the `page`-field
+infrastructure and the ClaudeCleaner working paper). The branch is currently at `16c9764`,
+one commit behind.
+
+Delivery is a pull request.
+
 ## Files
 
 ```
-/Users/russellfyfe/rippedpages/
-├── music-madness/index.html   NEW — case study; Vercel serves it at /music-madness
-├── assets/paper.css           NEW — shared tokens + paper/grid/crop frame
-├── index.html                 EDIT — link paper.css; fix same-origin link target
-├── inventory.full.json        EDIT — correct blurb, retarget url
-└── data/projects.json         REGENERATED — never edited by hand
+<worktree>/
+├── work/music-madness/index.html   NEW — the working paper; served at /work/music-madness/
+├── inventory.full.json             EDIT — correct blurb, add `page`
+└── data/projects.json              REGENERATED — never edited by hand
 ```
 
-A directory with `index.html` gives the clean `/music-madness` URL under Vercel's static
-serving with zero configuration, preserving the site's no-build-step property.
+`index.html` (the register) is **not touched**. The `page`-field infrastructure it needs
+already landed on `main`.
 
-## Shared stylesheet extraction
+The design spec stays in the SpotifyMadness repo, where it already lives and where it also
+covers Part 1. `.vercelignore` is deliberately left alone: the sibling `calendez` branch
+already adds a `docs/` exclusion, and duplicating that change here would create a pointless
+merge conflict.
 
-Move into `assets/paper.css`: the `:root` token block, the `*` reset, `html`/`body` with the
-paper-and-grid background, `.rp` container, and the `.crop` / `.reg` frame marks. Both pages
-link it. Page-specific styles stay inline in their own file.
+## House conventions
 
-This is a mechanical move, not a rewrite. `index.html` must render identically before and
-after — verify visually and confirm no token is left behind. Rationale: with two pages,
-duplicated tokens guarantee eventual visual drift, which is the specific failure that would
-most undermine a site whose appeal is reading as one coherent set of papers.
+Established by `work/claudecleaner/index.html` (merged) and `work/calendez/index.html`
+(in flight), both of which this page follows exactly.
 
-## Page content
+**Tokens are inlined per page, not shared.** Each working paper carries its own `<style>`
+block opening with the house tokens under the comment
+`/* RippedPages house tokens — kept identical to the register. */`, followed by a
+`/* Plate tokens — the app's own palette, reproduced from source. */` block.
 
-Working Papers register throughout. No Spotify neon, no dark background — the page belongs
-to RippedPages, and links out to the app for the real thing.
+This supersedes the earlier decision to extract a shared `assets/paper.css`. The reasoning
+that motivated extraction — that duplicated tokens will eventually drift — still holds, but
+it is now a portfolio-wide concern across five in-flight working papers, not something to
+resolve unilaterally from this branch. Raise it with the manager session instead.
 
-- **Header** — torn `.cover` block, kicker `RP-NN · Working paper`, title "Music Madness",
-  tagline. Stamp variant consistent with the homepage.
+The plate convention resolves the paper-versus-neon tension: an app's real palette is
+legitimate *inside a numbered plate*, reproduced from source, while the surrounding page
+stays in paper and ink. Music Madness's dark background and Spotify green belong in a plate.
 
-  `NN` must match the number the register renders for this row, which `index.html` derives
-  from array position (`pad(i + 1)`). Music Madness is currently third in
-  `inventory.full.json`, so the kicker reads `RP-03`. This is a hardcoded value in a static
-  file that cannot see the register's ordering — if projects are ever reordered, this number
-  must be updated by hand. Note it in a comment beside the markup.
-- **The brief** — Spotify top 32 seeded into a March Madness bracket, 30-second previews on
-  every matchup, you pick, a champion is crowned, result shareable as a card and link.
-- **The specimen** — a small bracket diagram drawn in oxblood ink on the grid (CSS/SVG, no
-  image assets), plus `▶ Play the live demo` linking to `https://music-madness-ashen.vercel.app`.
-- **The catch** — Spotify caps Developer Mode apps at 25 users; that is why this one cannot
-  be public.
-- **The prescription** — the prompt from Part 1, styled as a typed slip, with a copy button.
-- **Assembly** — the three setup steps.
-- **Colophon** — repo link, `← back to the register` to `/`.
+**URL convention** is `work/<slug>/index.html`, served at `/work/<slug>/`.
 
-Section headers reuse the existing `.reg-label` treatment (mono uppercase, 2px ink rule).
+**Register linkage:** `page` takes precedence over `url` in `index.html`, so a row with both
+links to the working paper in the same tab (`→ read the file`), and the working paper links
+out to the live app. Music Madness keeps its existing `url`.
+
+## Page structure
+
+Following the Calendez form:
+
+- `<title>Music Madness — RippedPages</title>`, meta description, `og:type=article`,
+  `theme-color: #e7e5db`, emoji favicon.
+- Back link above the cover: `← RP-03 · back to the register`, href `/`.
+  `RP-03` must match the number the register renders, which `index.html` derives from array
+  position (`pad(i + 1)`). Music Madness is currently third in `inventory.full.json`. A
+  static page cannot see that ordering, so if projects are reordered this must be updated by
+  hand — note it in a comment beside the markup.
+- Torn `.cover` header: kicker `Working paper · Web · 2026`, `<h1 class="wm">` with the name
+  split by an `<em>` for the oxblood accent, tagline.
+- Sections using `.reg-label` + `<h2 id="s-…">`:
+  1. **The idea** — Spotify top 32 seeded into a March Madness bracket, 30-second previews
+     on every matchup, you pick, a champion is crowned, result shareable as a card and link.
+  2. **Plate I · the bracket** — the app's real dark/green palette reproduced in CSS, showing
+     a region advancing. Plus `▶ Play the live demo` → `https://music-madness-ashen.vercel.app`.
+  3. **The catch** — Spotify caps Developer Mode apps at 25 users; that is why this one
+     cannot be public.
+  4. **The prescription** — the prompt from Part 1, styled as a typed slip, with a copy
+     button.
+  5. **Assembly** — the three setup steps.
+- Closing colophon grid with `<h3>` cells: Status · Shape · Platform · Filed, plus the repo
+  link.
 
 ## Inventory edits
 
@@ -252,25 +282,19 @@ In `inventory.full.json`, for `slug: "music-madness"`:
 
 ```json
 "blurb": "March Madness for your Spotify top artists — 32 seeded, previewed head-to-head, one champion. Clone it and run your own.",
-"url": "https://rippedpages.com/music-madness"
+"page": "/work/music-madness/"
 ```
 
-Then run `node scripts/build-public.mjs` to regenerate `data/projects.json`. The row now
-opens the case study, which hands off to the live demo.
-
-## Same-origin link fix
-
-`index.html:196` sets `target="_blank"` and `rel="noopener noreferrer"` on every row with a
-`url`. Once a row points at a same-site page this produces a stray new tab. Set the new-tab
-attributes only for external URLs; same-origin links navigate in place.
+`url` stays as-is. Then run `node scripts/build-public.mjs` to regenerate
+`data/projects.json`.
 
 ## Known duplication
 
 The prompt text exists in both `src/components/landing/PromptCard.tsx` and
-`music-madness/index.html`, in two separate repositories. They must stay identical. Each
-file carries a comment naming the other as its counterpart. This is accepted rather than
-solved: the alternative is a shared build step across repos, which is disproportionate for
-one block of text.
+`work/music-madness/index.html`, in two separate repositories. They must stay identical.
+Each file carries a comment naming the other as its counterpart. This is accepted rather
+than solved: the alternative is a shared build step across repos, which is disproportionate
+for one block of text.
 
 ---
 
@@ -286,12 +310,23 @@ one block of text.
 **RippedPages**
 - `node scripts/build-public.mjs` exits 0 with its leak assertion passing; confirm no
   `category`, `rainplan`, `repo`, `notes`, or `visibility` fields reach `data/projects.json`.
+- `git diff main...HEAD --stat` touches only `work/music-madness/index.html`,
+  `inventory.full.json`, and `data/projects.json`.
 - Serve locally (`npx serve .`): the register renders, the Music Madness row shows the
-  corrected blurb and navigates in place to `/music-madness`, the case study renders in the
-  paper aesthetic, the copy button copies the prompt, and the homepage is visually identical
-  to before the stylesheet extraction.
+  corrected blurb and navigates **in the same tab** to `/work/music-madness/` with the
+  `→ read the file` affordance, the working paper renders in the paper aesthetic, and the
+  copy button copies the prompt.
+- Side-by-side against `/work/calendez/` and `/work/claudecleaner/`: the three pages read as
+  the same publication.
 
 # Open items
 
-None. Both decisions raised during design are settled: the mini-bracket uses 8 artists
-(seven picks), and RippedPages extracts a shared `paper.css` rather than duplicating styles.
+None. All decisions are settled:
+
+- Mini-bracket uses 8 artists (seven picks).
+- RippedPages tokens are **inlined per page**, matching the house convention set by
+  ClaudeCleaner and Calendez. The earlier "extract a shared `paper.css`" decision is
+  withdrawn — it became a portfolio-wide question once five working papers went in flight,
+  and belongs to the manager session, not this branch.
+- The app's own palette appears inside a numbered plate, not across the page.
+- Delivery is a pull request.
