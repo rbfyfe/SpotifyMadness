@@ -23,7 +23,7 @@ Spotify caps apps in Developer Mode at 25 hand-listed users, so this can't be a 
 
 - Node.js 18+
 - A Spotify account
-- A Spotify Developer App with Client ID (already configured)
+- A Spotify Developer App — create one at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) to get a Client ID
 - A Supabase project (optional — required for sharing features)
 
 ### Setup
@@ -32,7 +32,9 @@ Spotify caps apps in Developer Mode at 25 hand-listed users, so this can't be a 
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Copy environment variables, then set VITE_SPOTIFY_CLIENT_ID in .env to your
+# Spotify app's Client ID. Without it, Spotify login shows a config error
+# (demo mode still works).
 cp .env.example .env
 
 # Start development server
