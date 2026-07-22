@@ -107,3 +107,86 @@ export function buildBracket(seededArtists: SeededArtist[], size: BracketSize): 
     champion: null,
   };
 }
+
+/** Find a matchup anywhere in the bracket by id. */
+export function findMatchup(bracket: BracketData, id: string): Matchup | undefined {
+  for (const round of bracket.rounds) {
+    const found = round.matchups.find((m) => m.id === id);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** Recursively remove an artist from all downstream matchups. Mutates in place. */
+function invalidateDownstream(bracket: BracketData, fromRound: number, artistId: string): void {
+  for (let r = fromRound; r < bracket.rounds.length; r++) {
+    const round = bracket.rounds[r]!;
+    for (const matchup of round.matchups) {
+      if (matchup.artistA?.id === artistId) {
+        matchup.artistA = null;
+        if (matchup.winner?.id === artistId) {
+          matchup.winner = null;
+        }
+      }
+      if (matchup.artistB?.id === artistId) {
+        matchup.artistB = null;
+        if (matchup.winner?.id === artistId) {
+          matchup.winner = null;
+        }
+      }
+    }
+  }
+  if (bracket.champion?.id === artistId) {
+    bracket.champion = null;
+  }
+}
+
+/**
+ * Record a winner and propagate them forward, returning a new bracket.
+ * Changing an existing winner invalidates every downstream matchup they reached.
+ * Returns the input unchanged if the matchup id is unknown.
+ */
+export function applyWinner(
+  bracket: BracketData,
+  matchupId: string,
+  winner: SeededArtist,
+): BracketData {
+  const next: BracketData = {
+    ...bracket,
+    champion: bracket.champion ? { ...bracket.champion } : null,
+    regions: [...bracket.regions],
+    rounds: bracket.rounds.map((r) => ({
+      ...r,
+      matchups: r.matchups.map((m) => ({ ...m })),
+    })),
+  };
+
+  const matchup = findMatchup(next, matchupId);
+  if (!matchup) return bracket;
+
+  if (matchup.winner && matchup.winner.id !== winner.id) {
+    invalidateDownstream(next, matchup.round + 1, matchup.winner.id);
+  }
+
+  matchup.winner = winner;
+
+  const nextRound = next.rounds[matchup.round + 1];
+  if (nextRound) {
+    const parent = nextRound.matchups.find(
+      (m) =>
+        m.childMatchupIds &&
+        (m.childMatchupIds[0] === matchupId || m.childMatchupIds[1] === matchupId),
+    );
+    if (parent) {
+      if (parent.childMatchupIds?.[0] === matchupId) {
+        parent.artistA = winner;
+      } else {
+        parent.artistB = winner;
+      }
+    }
+  } else {
+    next.champion = winner;
+  }
+
+  return next;
+}

@@ -21,7 +21,8 @@ Project-specific instructions for Claude Code when working in this repository.
 ### Routing
 
 Custom pathname-based routing in `App.tsx` — no React Router. Routes are:
-- `/` — Login page (Spotify OAuth or Demo mode)
+- `/` — Landing page (marketing page with the Claude Code prompt + demo)
+- `/login` — Spotify login page (Spotify OAuth or Demo mode)
 - `/callback` — OAuth callback handler
 - `/bracket` — Main bracket view (requires auth)
 - `/shared/:id` — Read-only shared bracket viewer (no auth required)

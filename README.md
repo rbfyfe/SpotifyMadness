@@ -1,6 +1,10 @@
 # Music Madness
 
-A March Madness-style single-elimination bracket tournament powered by the Spotify API. The app pulls your top 32 artists, seeds them by popularity, and lets you pit them head-to-head by listening to song previews until a champion is crowned. Share your completed bracket as a card image or send a link for others to view.
+A March Madness-style single-elimination bracket tournament powered by the Spotify API. The app pulls your top 32 artists, seeds them by popularity, and lets you pit them head-to-head until a champion is crowned. Share your completed bracket as a card image or send a link for others to view.
+
+Spotify caps apps in Developer Mode at 25 hand-listed users, so this can't be a public hosted app — `/` is a landing page that previews the experience and hands over a prompt for building your own copy. The Spotify login lives at `/login`.
+
+**Playback needs Spotify Premium.** The app requests the `streaming` scope and falls back to `preview_url`, which Spotify returns as `null` for apps created after 2024-11-27. Without Premium the bracket works exactly the same, just silently.
 
 ## Stack
 
@@ -35,13 +39,15 @@ cp .env.example .env
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app will be available at `http://127.0.0.1:5173`. Open it at that address, not
+`localhost` — Spotify's redirect URI match is exact, and the dev redirect URI below
+uses the loopback literal.
 
 ### Spotify Developer Dashboard
 
 The app uses PKCE auth (no backend needed). Ensure your Spotify app has these redirect URIs configured:
 
-- **Dev**: `http://localhost:5173/callback`
+- **Dev**: `http://127.0.0.1:5173/callback`
 - **Prod**: `https://<your-vercel-domain>/callback`
 
 ### Supabase Setup
@@ -123,10 +129,15 @@ The app works without Supabase — sharing features simply won't be available.
 ```
 src/
 ├── components/
-│   ├── LoginPage.tsx          # Spotify OAuth login
+│   ├── LoginPage.tsx          # Spotify OAuth login (/login)
 │   ├── CallbackPage.tsx       # OAuth callback handler
 │   ├── BracketPage.tsx        # Main bracket view
 │   ├── ErrorBoundary.tsx      # App-wide error boundary
+│   ├── landing/
+│   │   ├── LandingPage.tsx    # Marketing page at / — sections + copy
+│   │   ├── MiniBracket.tsx    # Playable 8-artist taste (real engine)
+│   │   ├── MiniMatchupCard.tsx # One head-to-head tile
+│   │   └── PromptCard.tsx     # Copyable Claude prompt (CLAUDE_PROMPT)
 │   ├── bracket/
 │   │   ├── BracketLayout.tsx  # Horizontal scrolling bracket tree
 │   │   ├── Region.tsx         # Single region (4 themed regions)
@@ -135,7 +146,7 @@ src/
 │   ├── matchup/
 │   │   ├── MatchupModal.tsx   # Split-screen matchup detail
 │   │   ├── ArtistPanel.tsx    # Artist info + tracks + choose button
-│   │   └── TrackList.tsx      # Top 3 tracks with preview playback
+│   │   └── TrackList.tsx      # Top 3 tracks with playback (Premium)
 │   ├── audio/
 │   │   ├── MiniPlayer.tsx     # Fixed bottom audio player bar
 │   │   └── WaveformBars.tsx   # Animated audio visualization
@@ -160,7 +171,8 @@ src/
 ├── utils/
 │   ├── pkce.ts                # PKCE crypto (SHA-256, base64url)
 │   ├── seeding.ts             # Serpentine draft seeding algorithm
-│   ├── bracketEngine.ts       # Bracket construction + matchup wiring
+│   ├── bracketEngine.ts       # Bracket construction, wiring, applyWinner
+│   ├── startDemo.ts           # Enter demo mode + navigate (shared by both pages)
 │   └── bracketStorage.ts      # Save/load brackets from Supabase
 ├── data/
 │   ├── demoArtists.ts         # 32 static artists for demo mode
@@ -256,8 +268,14 @@ vercel
 Tests cover the critical business logic:
 - **Seeding**: Serpentine draft correctness, balanced regions, proper seed assignment
 - **Bracket Engine**: Round structure, matchup wiring, child references
+- **applyWinner**: Propagation, downstream invalidation, champion set/clear, immutability
 - **Bracket Store**: Winner selection, propagation, undo/invalidation, champion detection, read-only mode
 - **PKCE**: String generation entropy, code challenge determinism
+- **Mini-bracket**: Full play-through to a champion, downstream clearing, no external images
+- **Prompt card**: Clipboard copy, failure state, auto-reset, and a SHA-256 digest pinning the
+  prompt text against its byte-identical copy in `rbfyfe/rippedpages`
+- **Routing**: Each route resolves, both demo entry points share one helper, and `/shared/:id`
+  stays matched ahead of the auth check
 
 ```bash
 npm test            # Run once

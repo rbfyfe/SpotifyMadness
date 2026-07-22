@@ -5,6 +5,7 @@ import { LoginPage } from './components/LoginPage';
 import { CallbackPage } from './components/CallbackPage';
 import { BracketPage } from './components/BracketPage';
 import { SharedBracketPage } from './components/shared/SharedBracketPage';
+import { LandingPage } from './components/landing/LandingPage';
 
 function getPath() {
   return window.location.pathname;
@@ -26,10 +27,12 @@ export default function App() {
         <SharedBracketPage key="shared" />
       ) : path === '/callback' ? (
         <CallbackPage key="callback" />
+      ) : path === '/login' ? (
+        <LoginPage key="login" />
       ) : isAuthenticated && path === '/bracket' ? (
         <BracketPage key="bracket" />
       ) : (
-        <LoginPage key="login" />
+        <LandingPage key="landing" />
       )}
     </AnimatePresence>
   );
