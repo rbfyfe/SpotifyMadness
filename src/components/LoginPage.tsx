@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { useSpotifyAuth } from '../hooks/useSpotifyAuth';
+import { isSpotifyConfigured, useSpotifyAuth } from '../hooks/useSpotifyAuth';
 import { startDemo } from '../utils/startDemo';
 
 export function LoginPage() {
   const { login } = useSpotifyAuth();
+  const spotifyConfigured = isSpotifyConfigured();
 
   return (
     <div className="animated-gradient min-h-screen flex flex-col items-center justify-center px-4">
@@ -31,14 +32,27 @@ export function LoginPage() {
         </p>
 
         <div className="flex flex-col items-center gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={login}
-            className="bg-spotify-green hover:bg-spotify-green-bright text-black font-bold text-lg px-10 py-4 rounded-full transition-colors duration-200 font-body cursor-pointer"
-          >
-            Connect with Spotify
-          </motion.button>
+          {spotifyConfigured ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={login}
+              className="bg-spotify-green hover:bg-spotify-green-bright text-black font-bold text-lg px-10 py-4 rounded-full transition-colors duration-200 font-body cursor-pointer"
+            >
+              Connect with Spotify
+            </motion.button>
+          ) : (
+            <div className="max-w-md text-center border border-red-400/40 bg-red-400/10 rounded-2xl px-6 py-4">
+              <p className="text-red-400 font-bold font-body mb-1">
+                Spotify login isn't configured
+              </p>
+              <p className="text-text-secondary text-sm font-body">
+                Copy <code>.env.example</code> to <code>.env</code>, set{' '}
+                <code>VITE_SPOTIFY_CLIENT_ID</code> to your Spotify app's client ID, and restart
+                the dev server. Or try the demo below — no Spotify account needed.
+              </p>
+            </div>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.05 }}

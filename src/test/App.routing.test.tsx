@@ -10,6 +10,9 @@ import { startDemo } from '../utils/startDemo';
 // render. Mock at the hook boundary so /callback resolves deterministically and
 // silently instead of depending on that console.error path.
 vi.mock('../hooks/useSpotifyAuth', () => ({
+  // These routing tests run without a .env, so treat Spotify as configured —
+  // LoginPage's unconfigured state is covered in useSpotifyAuth.config.test.tsx.
+  isSpotifyConfigured: () => true,
   useSpotifyAuth: () => ({
     login: vi.fn(),
     handleCallback: vi.fn().mockResolvedValue(false),
